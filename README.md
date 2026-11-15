@@ -60,6 +60,13 @@ npm install
 npm run build
 ```
 
+## Updates
+
+atmdui tells whip_core where it lives (`whip_updates` in `fxmanifest.lua`). whip_core then compares your copy with
+the latest release on GitHub and says when a newer one is out: in the server console, in `/whip`'s setup report, in
+the `whipupdates` console command, and as a notice to an admin who turns developer mode on. It checks GitHub at
+most twice a day and sends nothing about your server but its address.
+
 ## Changes from the original
 
 | Original (QBCore / ESX / Qbox + ox_lib) | On WHIP |

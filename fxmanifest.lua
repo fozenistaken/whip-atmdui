@@ -11,7 +11,8 @@ use_experimental_fxv2_oal 'yes'
 name 'atmdui'
 description 'DUI ATM on the WHIP framework (port of osm-atmdui)'
 author 'osmfxmods.com (original); WHIP port'
-version '1.0.0-whip'
+version '1.1.0-whip'
+whip_updates 'fozenistaken/whip-atmdui'   -- whip_core checks GitHub's latest release and says when a newer one is out
 
 dependency 'whip_core'
 whip_requires '1.0'
