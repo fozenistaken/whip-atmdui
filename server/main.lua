@@ -287,4 +287,10 @@ Whip.register(function()
     end)
 end)
 
+-- Downloaded as a ZIP the folder is "whip-atmdui-main": say what to do about WHIP's item-name warning
+if GetCurrentResourceName() ~= 'atmdui' then
+    print(('^3[atmdui] This resource is named "%s". Rename its folder to "atmdui" (and the ensure line in server.cfg): '
+        .. 'WHIP warns about the item names (atmdui_card, atmdui_receipt) until it is.^7'):format(GetCurrentResourceName()))
+end
+
 Whip.sayStarted()

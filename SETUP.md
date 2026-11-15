@@ -20,7 +20,11 @@ git clone https://github.com/fozenistaken/whip-atmdui.git atmdui
 ```
 
 or download the ZIP from GitHub (Code → Download ZIP) and unpack it. Put the folder in your server's `resources`
-folder. Name the folder `atmdui`; another name works too, but the commands in this guide use `atmdui`.
+folder.
+
+**Rename the folder to `atmdui`.** The ZIP unpacks as `whip-atmdui-main` (and a plain `git clone` as `whip-atmdui`).
+The ATM still works under those names, but WHIP then warns at every start that the items (`atmdui_card`,
+`atmdui_receipt`) don't start with the resource's name, and the commands in this guide use `atmdui`.
 
 ## 3. Turn off WHIP's own ATM prompt
 

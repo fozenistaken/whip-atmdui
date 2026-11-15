@@ -40,7 +40,7 @@ do not sell it.
 The full step-by-step guide, with settings and troubleshooting, is in **[SETUP.md](SETUP.md)**. In short:
 
 1. Requires `whip_core` 1.0 or newer and `oxmysql`.
-2. Put the `atmdui` folder in your resources, and add `ensure atmdui` after WHIP's lines in `server.cfg`.
+2. Put the folder in your resources **named `atmdui`** (the ZIP unpacks as `whip-atmdui-main`: rename it), and add `ensure atmdui` after WHIP's lines in `server.cfg`.
 3. Turn off WHIP's own ATM prompt on the same props, or both prompts show. In `whip_core/config.lua`, set
    `Config.AtmProps = {}`.
 4. Start the server. The `atmdui_cards` table is created by itself; there is no SQL to import.
