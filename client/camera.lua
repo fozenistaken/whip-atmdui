@@ -160,6 +160,10 @@ function Camera.StartControlThread()
             -- Disable all controls
             DisableAllControlActions(0)
 
+            -- The camera sits where the player's head is: hide their own body from it (this frame, this game only;
+            -- everyone else still sees them standing at the ATM)
+            SetEntityLocallyInvisible(PlayerPedId())
+
             -- Draw crosshair dot in center of screen
             DrawRect(0.5, 0.5, 0.003, 0.005, 255, 255, 255, 200)
 

@@ -28,8 +28,10 @@ do not sell it.
 - **One WHIP prompt** (`AddAction`) on every ATM model. No target resource is needed.
 - **The screen is handled by WHIP** (`SetScreenOpen`) while the camera is at the keypad and while a receipt is open.
 - **Settings in game:** money and PIN settings are also on `/whip` → Settings → ATM.
-- **Items:** `atmdui_card` (Bank Card) and `atmdui_receipt` (ATM Receipt) are registered by the resource. The receipt
-  shows its details in the inventory and opens when used.
+- **Items:** `atmdui_card` (Bank Card) and `atmdui_receipt` (ATM Receipt) are registered by the resource, with their
+  pictures in `html/img/items/`. The receipt shows its details in the inventory and opens when used.
+- **Your own body stays out of the view** while the camera is at the keypad. Other players still see you standing at
+  the ATM.
 
 ## Install
 
@@ -52,11 +54,6 @@ cd web
 npm install
 npm run build
 ```
-
-## Known issues
-
-- **The bank card has no item picture yet.** `atmdui_card` shows a placeholder in the inventory. The receipt has its
-  picture (`html/img/items/atmdui_receipt.webp`); a card picture still needs to be made.
 
 ## Changes from the original
 
