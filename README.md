@@ -30,7 +30,8 @@ do not sell it.
 - **One WHIP prompt** (`AddAction`) on every ATM model. No target resource is needed.
 - **The screen is handled by WHIP** (`SetScreenOpen`) while the camera is at the keypad and while a receipt is open.
 - **Settings in game:** money and PIN settings are also on `/whip` → Settings → ATM.
-- **Items:** `atmdui_card` (Bank Card) and `atmdui_receipt` (ATM Receipt) are registered by the resource, with their
+- **Items:** a Bank Card and an ATM Receipt, named after the resource's folder (`atmdui_card` and `atmdui_receipt` in a
+  folder called `atmdui`, so WHIP never warns about the names), with their
   pictures in `html/img/items/`. The receipt shows its details in the inventory and opens when used.
 - **Your own body stays out of the view** while the camera is at the keypad. Other players still see you standing at
   the ATM.
@@ -40,7 +41,7 @@ do not sell it.
 The full step-by-step guide, with settings and troubleshooting, is in **[SETUP.md](SETUP.md)**. In short:
 
 1. Requires `whip_core` 1.0 or newer and `oxmysql`.
-2. Put the folder in your resources **named `atmdui`** (the ZIP unpacks as `whip-atmdui-main`: rename it), and add `ensure atmdui` after WHIP's lines in `server.cfg`.
+2. Put the folder in your resources (we suggest naming it `atmdui`; the ZIP unpacks as `whip-atmdui-main`), and add its `ensure` line after WHIP's lines in `server.cfg`.
 3. Turn off WHIP's own ATM prompt on the same props, or both prompts show. In `whip_core/config.lua`, set
    `Config.AtmProps = {}`.
 4. Start the server. The `atmdui_cards` table is created by itself; there is no SQL to import.

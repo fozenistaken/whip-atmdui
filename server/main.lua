@@ -14,7 +14,11 @@
 --  * Items, table and declarations live in Whip.register, so a whip_core restart re-declares them.
 
 local SESSION_SECONDS = 600
-local CARD_ITEM, RECEIPT_ITEM = 'atmdui_card', 'atmdui_receipt'
+-- The items are named after this resource (WHIP's rule: a resource's item names start with its own name), so they
+-- are atmdui_card / atmdui_receipt in a folder called atmdui, and still never clash under any other folder name
+-- (GitHub's ZIP unpacks as whip-atmdui-main). Pick the folder name once: renaming it later renames the items.
+local RES = GetCurrentResourceName()
+local CARD_ITEM, RECEIPT_ITEM = RES .. '_card', RES .. '_receipt'
 
 local sessions = {}   -- [src] = { cardId, accountId, accountNumber, untilAt, charId }
 local lastTx   = {}   -- [src] = { type, amount, account, balance, at, receipted }
@@ -89,6 +93,7 @@ Whip.register(function()
     Whip.core:RegisterItem(CARD_ITEM, {
         name = 'Bank Card', desc = 'Insert it at an ATM. The PIN is not written on it.',
         weight = 0.01, type = 'misc', stack = false,
+        image = 'html/img/items/atmdui_card.webp',      -- the picture keeps its own name whatever the folder is called
         metaFields = {
             { key = 'number', label = 'Card' },
             { key = 'account', label = 'Account' },
@@ -100,6 +105,7 @@ Whip.register(function()
     Whip.core:RegisterItem(RECEIPT_ITEM, {
         name = 'ATM Receipt', desc = 'A printed ATM receipt.',
         weight = 0.001, type = 'misc', stack = false, usable = true,
+        image = 'html/img/items/atmdui_receipt.webp',
         metaFields = {
             { key = 'type', label = 'Transaction', format = 'uppercase' },
             { key = 'amount', label = 'Amount' },
@@ -286,11 +292,5 @@ Whip.register(function()
         exports.whip_core:NotifyPlayer(source, Locale('receipt_given'), 'success')
     end)
 end)
-
--- Downloaded as a ZIP the folder is "whip-atmdui-main": say what to do about WHIP's item-name warning
-if GetCurrentResourceName() ~= 'atmdui' then
-    print(('^3[atmdui] This resource is named "%s". Rename its folder to "atmdui" (and the ensure line in server.cfg): '
-        .. 'WHIP warns about the item names (atmdui_card, atmdui_receipt) until it is.^7'):format(GetCurrentResourceName()))
-end
 
 Whip.sayStarted()
