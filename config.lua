@@ -238,7 +238,7 @@ Config.Animation = {
 -- UI Customization
 Config.UI = {
     bankName = 'FLEECA',
-    language = 'tr',            -- UI language
+    language = 'en',            -- UI language: 'en' or 'tr' (also in /whip -> Settings -> ATM)
 }
 
 -- Locales
