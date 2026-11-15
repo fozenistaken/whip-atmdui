@@ -35,6 +35,8 @@ do not sell it.
 
 ## Install
 
+The full step-by-step guide, with settings and troubleshooting, is in **[SETUP.md](SETUP.md)**. In short:
+
 1. Requires `whip_core` 1.0 or newer and `oxmysql`.
 2. Put the `atmdui` folder in your resources, and add `ensure atmdui` after WHIP's lines in `server.cfg`.
 3. Turn off WHIP's own ATM prompt on the same props, or both prompts show. In `whip_core/config.lua`, set
