@@ -3,6 +3,8 @@
 A realistic ATM for the [WHIP](https://whipfx.net) FiveM framework. The banking screen is drawn on the ATM's own
 screen in the world (a DUI), and the camera moves to the keypad: you press the real buttons on the machine.
 
+![atmdui in game: inserting a card, typing the PIN and taking cash](docs/atmdui.gif)
+
 This is a port of **[osm-atmdui](https://github.com/OsmFX-Mods/osm-atmdui)** by [osmfxmods.com](https://osmfxmods.com)
 to WHIP. All credit for the original design, the screen and the camera work goes to OsmFX Mods. The original's own
 readme is kept as [ORIGINAL_README.md](ORIGINAL_README.md).
