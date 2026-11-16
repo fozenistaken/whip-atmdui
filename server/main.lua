@@ -65,6 +65,29 @@ local function remember(src, kind, amount, account, accountId)
     lastTx[src] = { type = kind, amount = amount, account = account or 'N/A', balance = balanceOf(accountId), at = os.time() }
 end
 
+--- Every ATM call is made AT a cash machine: WHIP's `near` rule with the nearest machine whip_core knows of
+--- (GetNearestAtm, its list of GTA's ATMs), so a session opened at one is no use after walking away from it. An older
+--- whip_core has no such list: the calls then run without the check, and the console says so once.
+local nearAtm
+local function atmNear()
+    if nearAtm == nil then
+        if pcall(function() return exports.whip_core:GetNearestAtm(vector3(0.0, 0.0, 0.0)) end) then
+            nearAtm = {
+                at = function(source)
+                    local ped = GetPlayerPed(source)
+                    if not ped or ped == 0 then return nil end
+                    return (exports.whip_core:GetNearestAtm(GetEntityCoords(ped)))
+                end,
+                range = function() return (Config.Interaction.reach or 1.5) + 1.0 end,   -- the prompt's reach and a step
+            }
+        else
+            nearAtm = false
+            print('^3[atmdui] whip_core has no GetNearestAtm (update it): ATM calls are not tied to standing at a machine^0')
+        end
+    end
+    return nearAtm or nil
+end
+
 --- The card the player carries (the first one), with its row, or nil and why.
 local function cardOf(src)
     local found = exports.whip_core:FindItem(src, CARD_ITEM)
@@ -93,6 +116,9 @@ Whip.register(function()
     Whip.core:RegisterItem(CARD_ITEM, {
         name = 'Bank Card', desc = 'Insert it at an ATM. The PIN is not written on it.',
         weight = 0.01, type = 'misc', stack = false,
+        -- Fits in WHIP's wallet, and FindItem / HasItem still find it there (whip_core with wallet items;
+        -- an older whip_core ignores the field and the card stays a pocket item).
+        wallet = true,
         image = 'html/img/items/atmdui_card.webp',      -- the picture keeps its own name whatever the folder is called
         metaFields = {
             { key = 'number', label = 'Card' },
@@ -120,12 +146,13 @@ Whip.register(function()
     end)
 
     -- What the ATM shows first: card or not, and the name. No balance is read until the PIN is right.
-    Whip.core:SecureCallback('atmdui:start', { rateLimit = 1000 }, function(source, player)
+    Whip.core:SecureCallback('atmdui:start', { near = atmNear(), rateLimit = 1000 }, function(source, player)
         sessions[source] = nil
         return { hasCard = exports.whip_core:HasItem(source, CARD_ITEM), name = fullName(source, player) }
     end)
 
     Whip.core:SecureCallback('atmdui:verifyPIN', {
+        near = atmNear(),
         rateLimit = 1000,
         params = { { 'pin', 'string', 8 } },
     }, function(source, player, pin)
@@ -155,6 +182,7 @@ Whip.register(function()
 
     -- Issue a card for the player's default account. Only the PIN's hash is stored, never the PIN.
     Whip.core:SecureCallback('atmdui:createCard', {
+        near = atmNear(),
         rateLimit = 3000,
         params = { { 'pin', 'string', 8 } },
     }, function(source, player, pin)
@@ -200,6 +228,7 @@ Whip.register(function()
     end)
 
     Whip.core:SecureCallback('atmdui:withdraw', {
+        near = atmNear(),
         rateLimit = 1500,
         params = { { 'amount', 'amount', 100000000 } },
     }, function(source, player, amount)
@@ -230,6 +259,7 @@ Whip.register(function()
     end)
 
     Whip.core:SecureCallback('atmdui:deposit', {
+        near = atmNear(),
         rateLimit = 1500,
         params = { { 'amount', 'amount', 100000000 } },
     }, function(source, player, amount)
@@ -251,6 +281,7 @@ Whip.register(function()
 
     -- To another account by its number: the keypad types the digits of WB-######
     Whip.core:SecureCallback('atmdui:transfer', {
+        near = atmNear(),
         rateLimit = 2000,
         params = { { 'account', 'string', 12 }, { 'amount', 'amount', 100000000 } },
     }, function(source, player, account, amount)
@@ -280,7 +311,7 @@ Whip.register(function()
     end)
 
     -- One receipt per real transaction, from the server's own figures, within two minutes of it
-    Whip.core:SecureEvent('atmdui:receipt', { rateLimit = 2000 }, function(source)
+    Whip.core:SecureEvent('atmdui:receipt', { near = atmNear(), rateLimit = 2000 }, function(source)
         local tx = lastTx[source]
         if not tx or tx.receipted or os.time() - tx.at > 120 then return false end
         tx.receipted = true
