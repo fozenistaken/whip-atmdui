@@ -204,9 +204,7 @@ Config.Sounds = {
 -- `default`. Tune one in game: stand at the ATM, F8, `atmrows` (shows the 8 slots), then
 -- `atmrows left 28 49 70 89` / `atmrows right 19 40 62 80`; it prints the line for that model to paste here.
 Config.ScreenRows = {
-    -- The original's Config.ButtonOffsets put the left and right keys at the same heights (prop_fleeca_atm:
-    -- z 1.23 / 1.17 / 1.11 / 1.06 on both sides), so both sides share the rows that fit the right side in game.
-    -- Fine-tune in game with the dev command `atmrows left|right a b c d`.
+    -- One row set for both sides: on these models the left and right keys sit at the same heights.
     default = { left = { 19.0, 39.7, 61.8, 80.3 }, right = { 19.0, 39.7, 61.8, 80.3 } },
 }
 

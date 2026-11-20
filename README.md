@@ -1,5 +1,7 @@
 # atmdui for WHIP
 
+> Works on **FiveM Legacy** and **GTA V Enhanced**.
+
 A realistic ATM for the [WHIP](https://whipfx.net) FiveM framework. The banking screen is drawn on the ATM's own
 screen in the world (a DUI), and the camera moves to the keypad: you press the real buttons on the machine.
 

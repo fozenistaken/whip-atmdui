@@ -1,27 +1,10 @@
--- atmdui server, on WHIP.
---
--- Ported from osm-atmdui (osmfxmods.com, CC BY-NC-SA 4.0). What changed for WHIP:
---  * Money is WHIP's bank. A card belongs to one account (the holder's default account when it is issued);
---    withdraw / deposit / transfer go through BankWithdraw / BankDeposit / BankTransfer, so the bank's own
---    permission, frozen-account and own-character rules apply, and every move is on the account's statement
---    and visible at WHIP's bank and phone.
---  * Cash is WHIP's cash item: a withdrawal pays notes (PayPlayer), a deposit takes them (ChargePlayer,
---    refunded if the bank refuses).
---  * The PIN is never on the card: item metadata is visible to the holder's game. The server keeps a hash
---    (GetPasswordHash) in its own table, with the wrong-PIN count and lockout, so a lockout survives a relog.
---  * A correct PIN opens a server-side session bound to that card and account; the client sends amounts and
---    digits only. Every call is a SecureCallback/SecureEvent (rate limits; refusals in /whip -> Monitor).
---  * Items, table and declarations live in Whip.register, so a whip_core restart re-declares them.
-
 local SESSION_SECONDS = 600
--- The items are named after this resource (WHIP's rule: a resource's item names start with its own name), so they
--- are atmdui_card / atmdui_receipt in a folder called atmdui, and still never clash under any other folder name
--- (GitHub's ZIP unpacks as whip-atmdui-main). Pick the folder name once: renaming it later renames the items.
+
 local RES = GetCurrentResourceName()
 local CARD_ITEM, RECEIPT_ITEM = RES .. '_card', RES .. '_receipt'
 
-local sessions = {}   -- [src] = { cardId, accountId, accountNumber, untilAt, charId }
-local lastTx   = {}   -- [src] = { type, amount, account, balance, at, receipted }
+local sessions = {}
+local lastTx   = {}
 
 local function dbg(...)
     if Config.Debug then print('[atmdui]', ...) end
@@ -41,7 +24,6 @@ local function fullName(src, player)
         or ('%s %s'):format(player and player.firstName or '', player and player.lastName or '')
 end
 
---- The session for this player, still open and still the same character, or nil.
 local function session(src, player)
     local s = sessions[src]
     if not s or os.time() > s.untilAt or (player and player.charId ~= s.charId) then
@@ -65,9 +47,6 @@ local function remember(src, kind, amount, account, accountId)
     lastTx[src] = { type = kind, amount = amount, account = account or 'N/A', balance = balanceOf(accountId), at = os.time() }
 end
 
---- Every ATM call is made AT a cash machine: WHIP's `near` rule with the nearest machine whip_core knows of
---- (GetNearestAtm, its list of GTA's ATMs), so a session opened at one is no use after walking away from it. An older
---- whip_core has no such list: the calls then run without the check, and the console says so once.
 local nearAtm
 local function atmNear()
     if nearAtm == nil then
@@ -78,7 +57,7 @@ local function atmNear()
                     if not ped or ped == 0 then return nil end
                     return (exports.whip_core:GetNearestAtm(GetEntityCoords(ped)))
                 end,
-                range = function() return (Config.Interaction.reach or 1.5) + 1.0 end,   -- the prompt's reach and a step
+                range = function() return (Config.Interaction.reach or 1.5) + 1.0 end,
             }
         else
             nearAtm = false
@@ -88,7 +67,6 @@ local function atmNear()
     return nearAtm or nil
 end
 
---- The card the player carries (the first one), with its row, or nil and why.
 local function cardOf(src)
     local found = exports.whip_core:FindItem(src, CARD_ITEM)
     local cardId = found and found.metadata and found.metadata.cardId
@@ -116,10 +94,9 @@ Whip.register(function()
     Whip.core:RegisterItem(CARD_ITEM, {
         name = 'Bank Card', desc = 'Insert it at an ATM. The PIN is not written on it.',
         weight = 0.01, type = 'misc', stack = false,
-        -- Fits in WHIP's wallet, and FindItem / HasItem still find it there (whip_core with wallet items;
-        -- an older whip_core ignores the field and the card stays a pocket item).
+
         wallet = true,
-        image = 'html/img/items/atmdui_card.webp',      -- the picture keeps its own name whatever the folder is called
+        image = 'html/img/items/atmdui_card.webp',
         metaFields = {
             { key = 'number', label = 'Card' },
             { key = 'account', label = 'Account' },
@@ -139,13 +116,11 @@ Whip.register(function()
         },
     })
 
-    -- Reading a receipt opens it on screen; the receipt is kept
     Whip.core:RegisterUseHandler(RECEIPT_ITEM, function(source, player, slotData)
         TriggerClientEvent('atmdui:client:viewReceipt', source, slotData and slotData.metadata or {})
         return false
     end)
 
-    -- What the ATM shows first: card or not, and the name. No balance is read until the PIN is right.
     Whip.core:SecureCallback('atmdui:start', { near = atmNear(), rateLimit = 1000 }, function(source, player)
         sessions[source] = nil
         return { hasCard = exports.whip_core:HasItem(source, CARD_ITEM), name = fullName(source, player) }
@@ -180,7 +155,6 @@ Whip.register(function()
         return true, { name = fullName(source, player), bank = acct.balance, account = acct.accountNumber }
     end)
 
-    -- Issue a card for the player's default account. Only the PIN's hash is stored, never the PIN.
     Whip.core:SecureCallback('atmdui:createCard', {
         near = atmNear(),
         rateLimit = 3000,
@@ -212,7 +186,6 @@ Whip.register(function()
             return false, gwhy
         end
 
-        -- The card's row lands in the same transaction as the card itself
         local ok, cwhy = exports.whip_core:CommitWithAction({
             { query = 'INSERT INTO `atmdui_cards` (`cardId`, `charId`, `accountId`, `pinHash`, `createdAt`) VALUES (?, ?, ?, ?, ?)',
               values = { cardId, player.charId, acct.accountId, GetPasswordHash(pin), os.time() } },
@@ -242,7 +215,6 @@ Whip.register(function()
         local ok, why = exports.whip_core:BankWithdraw(s.accountId, amount, source, { reason = 'ATM withdrawal' })
         if not ok then return false, balanceOf(s.accountId), why end
 
-        -- The bank waited: still the same character before the notes are handed over?
         if not exports.whip_core:IsSessionCurrent(source, player.session) then
             exports.whip_core:BankSystemDeposit(s.accountId, amount, { reason = 'ATM withdrawal reversed', actorCharId = player.charId })
             return false, 0, Locale('session_expired')
@@ -279,7 +251,6 @@ Whip.register(function()
         return true, lastTx[source].balance
     end)
 
-    -- To another account by its number: the keypad types the digits of WB-######
     Whip.core:SecureCallback('atmdui:transfer', {
         near = atmNear(),
         rateLimit = 2000,
@@ -310,7 +281,6 @@ Whip.register(function()
         sessions[source] = nil
     end)
 
-    -- One receipt per real transaction, from the server's own figures, within two minutes of it
     Whip.core:SecureEvent('atmdui:receipt', { near = atmNear(), rateLimit = 2000 }, function(source)
         local tx = lastTx[source]
         if not tx or tx.receipted or os.time() - tx.at > 120 then return false end

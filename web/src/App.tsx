@@ -8,7 +8,6 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// The screens and messages are the resource's protocol (client/dui.lua, client/main.lua): unchanged.
 type ScreenType =
   | 'none' | 'welcome' | 'card_insert' | 'pin_entry' | 'main_menu'
   | 'withdraw' | 'withdraw_amount' | 'deposit' | 'transfer_account'
@@ -42,7 +41,6 @@ export default function App() {
   const [bankName, setBankName] = useState<string>('FLEECA');
   const [cardCost, setCardCost] = useState<number | null>(null);
   const [transferTo, setTransferTo] = useState<string>('');
-  // Row centres (percent of the screen's height) for the left and right side keys: Config.ScreenRows per model
   const [rows, setRows] = useState<{ left: number[], right: number[] }>({ left: [14.75, 38.25, 61.75, 85.25], right: [14.75, 38.25, 61.75, 85.25] });
   const [calibrate, setCalibrate] = useState<boolean>(false);
   const [now, setNow] = useState<Date>(new Date());
@@ -114,8 +112,6 @@ export default function App() {
           setTimeout(() => setToast(null), 3000);
           break;
         case 'INIT_SESSION': {
-          // client/dui.lua sends { action, data = { playerName, ... } }: the fields are on `data` itself.
-          // (The original read data.data here, so the session's name, balance and locale never arrived.)
           const d = data?.data ?? data ?? {};
           setSession({
             playerName: d.playerName || '',
@@ -123,7 +119,6 @@ export default function App() {
             quickAmounts: d.quickAmounts || [20, 50, 100, 200, 500]
           });
           if (d.locale) setLocale(d.locale);
-          // Upper-case text follows the language: Turkish i -> İ, English i -> I
           document.documentElement.lang = d.language || 'en';
           if (d.bankName) setBankName(String(d.bankName));
           break;
@@ -147,7 +142,6 @@ export default function App() {
     };
   }, []);
 
-  // The clock in the header, as every ATM shows it
   useEffect(() => {
     if (!isDui) return;
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -162,7 +156,6 @@ export default function App() {
     }
   }, [isNative]);
 
-  // Opacity and a small slide only (transform), as a real terminal's screen changes
   const pageVariants = {
     initial: { opacity: 0, y: 12 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } },
@@ -176,12 +169,10 @@ export default function App() {
   const timeText = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   const dateText = `${pad2(now.getDate())}.${pad2(now.getMonth() + 1)}.${now.getFullYear()}`;
 
-  // ── An option next to a physical side button: an arrow points at the key, like a real ATM ──
   const SideBtn = ({ id, label, right, accent, position }: { id: string, label: string, right?: boolean, accent?: boolean, position: number }) => {
     const hl = isHL(id);
     const top = (right ? rows.right : rows.left)[position - 1] ?? 50;
     return (
-      // Centred on its row (Config.ScreenRows), so the arrow meets the physical key beside the screen
       <div className={cn(
         'absolute flex items-center w-[95%] h-[8.5vh] -translate-y-1/2',
         right ? 'right-0 justify-end' : 'left-0 justify-start',
@@ -197,7 +188,6 @@ export default function App() {
           <span className={cn('text-[3.4vh] leading-none', hl ? '' : (accent ? 'text-[#f87171]' : 'text-[#7ee2b0]'))}>
             {right ? '▶' : '◀'}
           </span>
-          {/* Shrinks with its length and may take two lines: a label never leaves its bar */}
           <span className={cn(
             'flex-1 min-w-0 font-sans font-extrabold uppercase tracking-wide leading-[1.05] break-words line-clamp-2',
             right ? 'text-right' : 'text-left',
@@ -208,7 +198,6 @@ export default function App() {
     );
   };
 
-  // ── The bank's bar along the top, with date and time ──
   const TopBar = ({ title }: { title?: string }) => (
     <div className="absolute top-0 left-0 right-0 h-[9%] z-20 flex items-center justify-between px-[2.5vw] bg-gradient-to-b from-[#0d8a4e] to-[#09703f] border-b-[0.5vh] border-[#59d394] shadow-[0_0.6vh_1.2vh_rgba(0,0,0,0.45)]">
       <div className="flex items-baseline gap-[0.8vw]">
@@ -224,21 +213,18 @@ export default function App() {
     </div>
   );
 
-  // ── The instruction line along the bottom ──
   const BottomBar = ({ text }: { text: string }) => (
     <div className="absolute bottom-0 left-0 right-0 h-[7%] z-20 flex items-center justify-center bg-[#041d15]/95 border-t-[0.4vh] border-[#1d6b4b]">
       <span className="font-sans font-bold text-[2.4vh] tracking-[0.08em] text-[#fde047] uppercase text-center">{text}</span>
     </div>
   );
 
-  // Content between the two columns of option bars
   const Center = ({ children }: { children: any }) => (
     <div className="absolute top-[11%] bottom-[9%] left-[26%] right-[26%] flex flex-col justify-center items-center z-20 text-center">
       {children}
     </div>
   );
 
-  // A big figure sized by its length, so $1,211,650.00 fits the box as well as $20.00
   const fitSize = (s: string) => s.length <= 7 ? 9 : s.length <= 9 ? 7.6 : s.length <= 11 ? 6.4 : s.length <= 13 ? 5.4 : 4.6;
   const BigNumber = ({ value, prefix }: { value: string, prefix?: string }) => {
     const vh = fitSize(value);
@@ -252,7 +238,6 @@ export default function App() {
 
   const isFleeca = currentModel === 'prop_fleeca_atm';
 
-  // ── NUI (not the ATM screen): the receipt, read from the inventory ──
   if (!isDui) {
     const kind = receiptData?.type;
     const kindText = ({ withdraw: t('withdraw', 'Withdrawal'), deposit: t('deposit', 'Deposit'), transfer: t('transfer', 'Transfer') } as Record<string, string>)[kind] || kind;
@@ -263,7 +248,6 @@ export default function App() {
             <motion.div initial={{ y: 400, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 400, opacity: 0 }} transition={{ type: 'spring', damping: 22, stiffness: 120 }}
               className="relative w-[360px] text-[#1f2933] font-mono shadow-2xl"
               style={{ background: 'linear-gradient(to bottom, #fbfaf6, #f3efe4)' }}>
-              {/* torn edge */}
               <div className="h-3 w-full" style={{ background: 'radial-gradient(circle at 6px -2px, transparent 6px, #fbfaf6 6.5px) 0 0 / 12px 12px repeat-x' }} />
               <div className="px-7 pt-3 pb-8">
                 <div className="text-center border-b-2 border-dashed border-[#9aa5b1] pb-4 mb-4">
@@ -339,7 +323,6 @@ export default function App() {
         } : undefined}
       >
 
-        {/* ── The LCD: backlight, a faint raster and the glass's edge ── */}
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_45%,#0d4a35_0%,#06301f_55%,#031a12_100%)]" />
         <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.18] bg-[linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:100%_3px]" />
         <div className="absolute inset-0 z-[60] pointer-events-none shadow-[inset_0_0_8vh_rgba(0,0,0,0.75)]" />
@@ -348,7 +331,6 @@ export default function App() {
         {withSides && <TopBar title={titles[screen]} />}
         {withSides && <BottomBar text={hints[screen] || ''} />}
 
-        {/* ── Option bars: 4 rows a side, lined up with the ATM's physical keys (layout unchanged) ── */}
         {withSides && (
           <>
             <div className="absolute top-0 bottom-0 left-2 w-[25%] z-30">
@@ -402,7 +384,6 @@ export default function App() {
 
         <AnimatePresence mode="wait">
 
-          {/* ── IDLE: bank name, a card going into the slot ── */}
           {(screen === 'welcome' || screen === 'card_insert' || screen === 'card_eject') && (
             <motion.div key={screen} variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20 flex flex-col items-center justify-center">
               <div className="absolute top-0 left-0 right-0 h-[16%] flex items-center justify-center bg-gradient-to-b from-[#0d8a4e] to-[#09703f] border-b-[0.6vh] border-[#59d394]">
@@ -414,7 +395,6 @@ export default function App() {
                 {screen === 'welcome' ? t('welcome', 'Welcome') : screen === 'card_insert' ? t('processing', 'Processing...') : t('take_card', 'Please take your card')}
               </p>
 
-              {/* The card slot, with the card moving in (idle, reading) or out (eject) */}
               <div className="relative mt-[5vh] w-[34vh] h-[24vh]">
                 <motion.div
                   className="absolute left-1/2 top-0 w-[22vh] h-[14vh] -ml-[11vh] rounded-[1.4vh] bg-gradient-to-br from-[#e8f3ee] to-[#9fc9b4] border-[0.4vh] border-white/70 shadow-[0_1vh_2vh_rgba(0,0,0,0.5)] overflow-hidden"
@@ -435,7 +415,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── PIN ── */}
           {screen === 'pin_entry' && (
             <motion.div key="pin_entry" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -457,7 +436,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── MAIN MENU ── */}
           {screen === 'main_menu' && (
             <motion.div key="main_menu" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -471,7 +449,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── QUICK CASH ── */}
           {screen === 'withdraw' && (
             <motion.div key="withdraw" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -486,7 +463,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── AMOUNT / ACCOUNT ENTRY: a white field with dark digits ── */}
           {(screen === 'withdraw_amount' || screen === 'deposit' || screen === 'transfer_amount' || screen === 'transfer_account') && (
             <motion.div key="amount_entry" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -515,7 +491,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── DONE ── */}
           {screen === 'success' && (
             <motion.div key="success" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20 flex flex-col items-center justify-center">
               <TopBar />
@@ -540,7 +515,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── BALANCE ── */}
           {screen === 'balance' && (
             <motion.div key="balance" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -554,7 +528,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── RECEIPT? ── */}
           {screen === 'receipt_prompt' && (
             <motion.div key="receipt" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -564,7 +537,6 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* ── NO CARD: issue one ── */}
           {screen === 'no_card' && (
             <motion.div key="no_card" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="absolute inset-0 z-20">
               <Center>
@@ -585,7 +557,6 @@ export default function App() {
 
         </AnimatePresence>
 
-        {/* ── Calibration (dev: `atmrows` in F8): every slot, numbered, on its row ── */}
         {calibrate && (
           <div className="absolute inset-0 z-[150] pointer-events-none">
             {(['left', 'right'] as const).map(side => rows[side].map((top, i) => (
@@ -600,7 +571,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ── PLEASE WAIT ── */}
         <AnimatePresence>
           {processing.active && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[100] bg-[#031a12]/90 flex flex-col items-center justify-center">
@@ -639,7 +609,6 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* ── Browser preview only (never in game): jump between screens ── */}
         {!isNative && (
           <div className="absolute bottom-[8%] left-[1%] z-[999] bg-[#021610]/95 border-2 border-[#2a8a60] p-2 rounded-xl w-[24%] opacity-80 hover:opacity-100">
             <div className="text-[#7ee2b0] font-bold text-sm uppercase tracking-wider mb-2">Preview</div>
